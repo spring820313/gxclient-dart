@@ -1,0 +1,17 @@
+name: gxclient
+version: 0.0.1
+description: A sample command-line application
+environment:
+  sdk: '>=2.1.0 <3.0.0'
+
+dependencies:
+  bs58check: ^1.0.1
+  pointycastle: ^1.0.1
+  cryptoutils: ">=0.1.8"
+  json_annotation: ^2.2.0
+  logging: ^0.11.3+2
+
+dev_dependencies:
+  test: ^1.0.0
+  build_runner: ^1.0.0
+  json_serializable: ^2.0.0
