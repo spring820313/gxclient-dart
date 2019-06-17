@@ -1,15 +1,9 @@
 import 'dart:typed_data';
-import "../bytes/bytes.dart" as bytes;
+import "encoder.dart";
 
 abstract class Serializable {
-  bool deserialize(bytes.Reader reader, int ver);
-  bool serialize(bytes.Buffer buffer, int ver);
-
-  Uint8List asBytes(int ver) {
-    var buffer = new bytes.Buffer();
-    serialize(buffer, ver);
-    return buffer.asBytes();
-  }
+  bool serialize(Encoder encoder);
+  dynamic toJson();
 }
 
 class SerializationException implements Exception {

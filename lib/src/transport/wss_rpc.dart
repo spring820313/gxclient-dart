@@ -4,48 +4,31 @@ import 'dart:convert';
 import 'package:logging/logging.dart';
 import 'package:web_socket_channel/io.dart';
 import '../api/api.dart';
+import 'base_rpc.dart';
 
-class WssRpc {
+class WssRpc extends BaseRpc{
   final Logger log = Logger("WssRpc");
-  static const int NORMAL_CLOSURE_STATUS = 1000;
+  static const int NORMAL_CLOSURE_STATUS = 1005;
   static const int GOING_AWAY_STATUS = 1001;
-  bool _loggedIn = false;
   int _currentId = 0;
   final _completers = <int, Completer<Response>>{};
   final _callClassMap = <int, Type>{};
 
-  String _lastCall;
+  String url;
 
-  int _requestedApis = ApiType.API_DATABASE |
-      ApiType.API_HISTORY |
-      ApiType.API_NETWORK_BROADCAST;
-
-  static final _instance = WssRpc._internal();
-
-  String _pass = "";
-
-  String _username = "";
-
-  static const String NODE_URL = "wss://eu.nodes.bitshares.ws";
-
-  WssRpc._internal() {
+  WssRpc(this.url) {
     Logger.root.level = Level.ALL;
     Logger.root.onRecord.listen((rec){
       print('${rec.level}::${rec.time}::${rec.message}');
     });
-    connect();
-  }
-
-  factory WssRpc() {
-    return _instance;
   }
 
   IOWebSocketChannel _channel;
 
   void connect() async {
-    log.info("Connecting to $NODE_URL...");
+    log.info("Connecting to $url...");
     try {
-      _channel = IOWebSocketChannel.connect(NODE_URL);
+      _channel = IOWebSocketChannel.connect(url);
       _channel.stream.listen((str) {
         Map json = jsonDecode(str);
         onData(json);
@@ -61,15 +44,13 @@ class WssRpc {
     } catch (e) {
       log.severe("Open error:$e");
     }
-    log.info("Conected to $NODE_URL");
-    if (!_loggedIn) {
-      login();
-    }
+    log.info("Conected to $url");
   }
 
+  @override
   Future<Response> call(Callable callable) async {
     if (_channel != null && _channel.sink != null) {
-      var call = callable.toCall(++_currentId);
+      var call = callable.toCall(++_currentId, false);
       log.info("-> ${call.toJson()}");
       final completer = Completer<Response>.sync();
       _completers[_currentId] = completer;
@@ -86,62 +67,7 @@ class WssRpc {
     log.info("<- $str");
     Response response = Response.fromJson(str);
     _completers.remove(response.id)?.complete(response);
-    if (response.result != null) {
-      if (response.result is int || response.result is bool) {
-        switch (_lastCall) {
-          case RPC.CALL_LOGIN:
-            {
-              _loggedIn = true;
-              requestApiAccess();
-            }
-            break;
-          case RPC.CALL_DATABASE:
-            {
-              Call.apiIds
-                  .putIfAbsent(ApiType.API_DATABASE, () => response.result);
-              requestApiAccess();
-            }
-            break;
-          case RPC.CALL_HISTORY:
-            {
-              Call.apiIds
-                  .putIfAbsent(ApiType.API_HISTORY, () => response.result);
-              requestApiAccess();
-            }
-            break;
-          case RPC.CALL_NETWORK_BROADCAST:
-            {
-              Call.apiIds.putIfAbsent(
-                  ApiType.API_NETWORK_BROADCAST, () => response.result);
-            }
-            break;
-        }
-      }
-    }
     handleRpcResponce(response, str);
-  }
-
-  void login() {
-    LoginCall loginMsg = LoginCall(_username, _pass);
-    _lastCall = RPC.CALL_LOGIN;
-    call(loginMsg);
-  }
-
-  void requestApiAccess() {
-    if ((_requestedApis & ApiType.API_DATABASE) == ApiType.API_DATABASE &&
-        !Call.apiIds.containsKey(ApiType.API_DATABASE)) {
-      _lastCall = RPC.CALL_DATABASE;
-      call(RequestApiTypeCall(RPC.CALL_DATABASE));
-    } else if ((_requestedApis & ApiType.API_HISTORY) == ApiType.API_HISTORY &&
-        !Call.apiIds.containsKey(ApiType.API_HISTORY)) {
-      _lastCall = RPC.CALL_HISTORY;
-      call(RequestApiTypeCall(RPC.CALL_HISTORY));
-    } else if ((_requestedApis & ApiType.API_NETWORK_BROADCAST) ==
-            ApiType.API_NETWORK_BROADCAST &&
-        !Call.apiIds.containsKey(ApiType.API_NETWORK_BROADCAST)) {
-      _lastCall = RPC.CALL_NETWORK_BROADCAST;
-      call(RequestApiTypeCall(RPC.CALL_NETWORK_BROADCAST));
-    }
   }
 
   void handleRpcResponce(Response response, str) {
@@ -150,12 +76,11 @@ class WssRpc {
   }
 
   bool isConnected() {
-    return _channel != null && _loggedIn;
+    return _channel != null;
   }
 
   void _onDisconnect(bool tryReconnect) {
     log.info("onDisconnect with tryReconnect = $tryReconnect");
-    _loggedIn = false;
     _currentId = 0;
     Call.apiIds.clear();
     if (tryReconnect) {
@@ -163,8 +88,12 @@ class WssRpc {
     }
   }
 
+  @override
   void dispose() {
     log.info("dispose...");
-    if (_channel != null) _channel.sink.close(NORMAL_CLOSURE_STATUS);
+    if (_channel != null) {
+      _channel.sink.close(NORMAL_CLOSURE_STATUS);
+      _channel = null;
+    }
   }
 }

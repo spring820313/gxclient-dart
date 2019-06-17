@@ -9,8 +9,10 @@ import 'package:pointycastle/ecc/api.dart' show ECSignature, ECPoint;
 import './exception.dart';
 import './key_base.dart';
 import './signature.dart';
+import '../core/formatting.dart';
+import 'package:pointycastle/digests/sha512.dart';
 
-/// EOS Public Key
+/// GXC Public Key
 class GXCPublicKey extends GXCKey {
   ECPoint q;
 
@@ -19,26 +21,13 @@ class GXCPublicKey extends GXCKey {
 
   /// Construct GXC public key from string
   factory GXCPublicKey.fromString(String keyStr) {
-    RegExp publicRegex = RegExp(r"^PUB_([A-Za-z0-9]+)_([A-Za-z0-9]+)",
-        caseSensitive: true, multiLine: false);
-    Iterable<Match> match = publicRegex.allMatches(keyStr);
-
-    if (match.isEmpty) {
       RegExp eosRegex = RegExp(r"^GXC", caseSensitive: true, multiLine: false);
       if (!eosRegex.hasMatch(keyStr)) {
-        throw InvalidKey("No leading EOS");
+        throw InvalidKey("No leading GXC");
       }
       String publicKeyStr = keyStr.substring(3);
       Uint8List buffer = GXCKey.decodeKey(publicKeyStr);
       return GXCPublicKey.fromBuffer(buffer);
-    } else if (match.length == 1) {
-      Match m = match.first;
-      String keyType = m.group(1);
-      Uint8List buffer = GXCKey.decodeKey(m.group(2), keyType);
-      return GXCPublicKey.fromBuffer(buffer);
-    } else {
-      throw InvalidKey('Invalid public key format');
-    }
   }
 
   factory GXCPublicKey.fromBuffer(Uint8List buffer) {
@@ -52,14 +41,13 @@ class GXCPublicKey extends GXCKey {
   }
 
   String toString() {
-    return 'GXC' + GXCKey.encodeKey(this.toBuffer(), keyType);
+    return 'GXC' + GXCKey.encodeKey(this.toBuffer());
   }
 }
 
 /// EOS Private Key
 class GXCPrivateKey extends GXCKey {
   Uint8List d;
-  String format;
 
   BigInt _r;
   BigInt _s;
@@ -70,15 +58,8 @@ class GXCPrivateKey extends GXCKey {
   /// Construct the private key from string
   /// It can come from WIF format for PVT format
   GXCPrivateKey.fromString(String keyStr) {
-    RegExp privateRegex = RegExp(r"^PVT_([A-Za-z0-9]+)_([A-Za-z0-9]+)",
-        caseSensitive: true, multiLine: false);
-    Iterable<Match> match = privateRegex.allMatches(keyStr);
-
-    if (match.isEmpty) {
-      format = 'WIF';
-      keyType = 'K1';
       // WIF
-      Uint8List keyWLeadingVersion = GXCKey.decodeKey(keyStr, GXCKey.SHA256X2);
+      Uint8List keyWLeadingVersion = GXCKey.decodeKey(keyStr, true);
       int version = keyWLeadingVersion.first;
       if (GXCKey.VERSION != version) {
         throw InvalidKey("version mismatch");
@@ -93,14 +74,7 @@ class GXCPrivateKey extends GXCKey {
       if (d.lengthInBytes != 32) {
         throw InvalidKey('Expecting 32 bytes, got ${d.length}');
       }
-    } else if (match.length == 1) {
-      format = 'PVT';
-      Match m = match.first;
-      keyType = m.group(1);
-      d = GXCKey.decodeKey(m.group(2), keyType);
-    } else {
-      throw InvalidKey('Invalid Private Key format');
-    }
+
   }
 
   /// Generate EOS private key from seed. Please note: This is not random!
@@ -137,15 +111,32 @@ class GXCPrivateKey extends GXCKey {
     return GXCPrivateKey.fromBuffer(d.bytes);
   }
 
-  /// Check if the private key is WIF format
-  bool isWIF() => this.format == 'WIF';
 
   /// Get the public key string from this private key
-  GXCPublicKey toEOSPublicKey() {
+  GXCPublicKey toGXCPublicKey() {
     BigInt privateKeyNum = decodeBigInt(this.d);
     ECPoint ecPoint = GXCKey.secp256k1.G * privateKeyNum;
 
     return GXCPublicKey.fromPoint(ecPoint);
+  }
+
+  Uint8List sharedSecret(GXCPublicKey publicKey) {
+    BigInt privateKeyNum = decodeBigInt(this.d);
+    var sharedPoint = publicKey.q * privateKeyNum;
+    BigInt bi = sharedPoint.x.toBigInteger();
+    var h = intToBytes(bi);
+    var len = h.length;
+    if(len < 32) {
+      var n = 32 - len;
+      var zeroPad = List.filled(n, 0);
+      h = zeroPad + h;
+    }
+
+    SHA512Digest sha512 = SHA512Digest();
+    final out = sha512.process(h);
+    return out;
+
+    //return h;
   }
 
   /// Sign the bytes data using the private key
@@ -179,7 +170,7 @@ class GXCPrivateKey extends GXCKey {
       int lenS = der.elementAt(5 + lenR);
       if (lenR == 32 && lenS == 32) {
         int i = GXCSignature.calcPubKeyRecoveryParam(
-            decodeBigInt(sha256Data), sig, this.toEOSPublicKey());
+            decodeBigInt(sha256Data), sig, this.toGXCPublicKey());
         i += 4; // compressed
         i += 27; // compact  //  24 or 27 :( forcing odd-y 2nd key candidate)
         return GXCSignature(i, sig.r, sig.s);
@@ -193,7 +184,7 @@ class GXCPrivateKey extends GXCKey {
     Uint8List keyWLeadingVersion =
         GXCKey.concat(Uint8List.fromList(version), this.d);
 
-    return GXCKey.encodeKey(keyWLeadingVersion, GXCKey.SHA256X2);
+    return GXCKey.encodeKey(keyWLeadingVersion, true);
   }
 
   BigInt _deterministicGenerateK(

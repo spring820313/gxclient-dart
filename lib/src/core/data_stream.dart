@@ -1,5 +1,9 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'numeric.dart' as numeric;
+import 'base.dart';
+import '../ecc/ecc.dart';
+import '../core/formatting.dart';
 
 class DataStream {
   /// Amount of valid data in `array` */
@@ -118,6 +122,35 @@ class DataStream {
     return v >> 0;
   }
 
+  /// Append a `uint64` */
+  void pushUint64(int v) {
+    var t = [
+      (v >> 0) & 0xff,
+      (v >> 8) & 0xff,
+      (v >> 16) & 0xff,
+      (v >> 24) & 0xff,
+      (v >> 32) & 0xff,
+      (v >> 40) & 0xff,
+      (v >> 48) & 0xff,
+      (v >> 56) & 0xff
+    ];
+    push(t);
+  }
+
+  /// Get a `uint64` */
+  int getUint64() {
+    var v = 0;
+    v |= get() << 0;
+    v |= get() << 8;
+    v |= get() << 16;
+    v |= get() << 24;
+    v |= get() << 32;
+    v |= get() << 40;
+    v |= get() << 48;
+    v |= get() << 56;
+    return v >> 0;
+  }
+
   /// Append a `uint64`. *Caution*: `number` only has 53 bits of precision */
   void pushNumberAsUint64(int v) {
     pushUint32(v >> 0);
@@ -212,5 +245,199 @@ class DataStream {
   /// Get a string */
   String getString() {
     return utf8.decode(getBytes());
+  }
+
+  void writeBytes(List<int> v) {
+    pushArray(v);
+  }
+
+  /// Append a `symbol_code`. Unlike `symbol`, `symbol_code` doesn't include a precision. */
+  void pushSymbolCode(String name) {
+    Uint8List a = Uint8List.fromList(utf8.encode(name));
+    while (a.length < 8) {
+      a.add(0);
+    }
+    pushArray(a.sublist(0, 8));
+  }
+
+  /// Get a `symbol_code`. Unlike `symbol`, `symbol_code` doesn't include a precision. */
+  dynamic getSymbolCode() {
+    var a = getUint8List(8);
+    int len;
+    for (len = 0; len < a.length; ++len) {
+      if (a[len] == 0) {
+        break;
+      }
+    }
+    var name = utf8.decode(Uint8List.view(a.buffer, a.offsetInBytes, len));
+    return name;
+  }
+
+  /// Append a `symbol` */
+  void pushSymbol(Symbol symbol) {
+    var a = [symbol.precision & 0xff];
+    a.addAll(utf8.encode(symbol.name));
+    while (a.length < 8) {
+      a.add(0);
+    }
+    pushArray(a.sublist(0, 8));
+  }
+
+  /// Get a `symbol` */
+  Symbol getSymbol() {
+    var precision = get();
+    var a = getUint8List(7);
+    int len;
+    for (len = 0; len < a.length; ++len) {
+      if (a[len] == 0) {
+        break;
+      }
+    }
+    var name = utf8.decode(new Uint8List.view(a.buffer, a.offsetInBytes, len));
+    return Symbol(name: name, precision: precision);
+  }
+
+  /// Append an asset */
+  void pushAsset(String s) {
+    s = s.trim();
+    var pos = 0;
+    var amount = '';
+    var precision = 0;
+    if (s[pos] == '-') {
+      amount += '-';
+      ++pos;
+    }
+    var foundDigit = false;
+    while (pos < s.length &&
+        s.codeUnitAt(pos) >= '0'.codeUnitAt(0) &&
+        s.codeUnitAt(pos) <= '9'.codeUnitAt(0)) {
+      foundDigit = true;
+      amount += s[pos];
+      ++pos;
+    }
+    if (!foundDigit) {
+      throw 'Asset must begin with a number';
+    }
+    if (s[pos] == '.') {
+      ++pos;
+      while (pos < s.length &&
+          s.codeUnitAt(pos) >= '0'.codeUnitAt(0) &&
+          s.codeUnitAt(pos) <= '9'.codeUnitAt(0)) {
+        amount += s[pos];
+        ++precision;
+        ++pos;
+      }
+    }
+    var name = s.substring(pos).trim();
+    pushArray(numeric.signedDecimalToBinary(8, amount));
+    pushSymbol(Symbol(name: name, precision: precision));
+  }
+
+  /// Get an asset */
+  String getAsset() {
+    var amount = getUint8List(8);
+    var sym = getSymbol();
+    var s = numeric.signedBinaryToDecimal(amount, minDigits: sym.precision + 1);
+    if (sym.precision != 0) {
+      s = s.substring(0, s.length - sym.precision) +
+          '.' +
+          s.substring(s.length - sym.precision);
+    }
+    return s + ' ' + sym.name;
+  }
+
+  /// Append a `name` */
+  void pushName(String s) {
+    charToSymbol(int c) {
+      if (c >= 'a'.codeUnitAt(0) && c <= 'z'.codeUnitAt(0)) {
+        return (c - 'a'.codeUnitAt(0)) + 6;
+      }
+      if (c >= '1'.codeUnitAt(0) && c <= '5'.codeUnitAt(0)) {
+        return (c - '1'.codeUnitAt(0)) + 1;
+      }
+      return 0;
+    }
+
+    var a = new Uint8List(8);
+    var bit = 63;
+    for (var i = 0; i < s.length; ++i) {
+      var c = charToSymbol(s.codeUnitAt(i));
+      if (bit < 5) {
+        c = c << 1;
+      }
+      for (var j = 4; j >= 0; --j) {
+        if (bit >= 0) {
+          a[(bit / 8).floor()] |= ((c >> j) & 1) << (bit % 8);
+          --bit;
+        }
+      }
+    }
+    pushArray(a);
+  }
+
+  /// Get a `name` */
+  String getName() {
+    var a = getUint8List(8);
+    var result = '';
+    for (var bit = 63; bit >= 0;) {
+      var c = 0;
+      for (var i = 0; i < 5; ++i) {
+        if (bit >= 0) {
+          c = (c << 1) | ((a[(bit / 8).floor()] >> (bit % 8)) & 1);
+          --bit;
+        }
+      }
+      if (c >= 6) {
+        result += String.fromCharCode(c + 'a'.codeUnitAt(0) - 6);
+      } else if (c >= 1) {
+        result += String.fromCharCode(c + '1'.codeUnitAt(0) - 1);
+      } else {
+        result += '.';
+      }
+    }
+    while (result.endsWith('.')) {
+      result = result.substring(0, result.length - 1);
+    }
+    return result;
+  }
+
+  /// Append a public key */
+  void pushPublicKey(String s) {
+    var key = GXCPublicKey.fromString(s);
+    //pushVarint32(numeric.publicKeyDataSize);
+    pushArray(key.toBuffer());
+  }
+
+  /// Get a public key */
+  String getPublicKey() {
+    //var size = getVaruint32();
+    var data = getUint8List(numeric.publicKeyDataSize);
+    return GXCPublicKey.fromBuffer(data).toString();
+  }
+
+  /// Append a private key */
+  void pushPrivateKey(String s) {
+    var key = GXCPrivateKey.fromString(s);
+    //pushVarint32(numeric.privateKeyDataSize);
+    pushArray(key.d);
+  }
+
+  /// Get a private key */
+  String getPrivateKey() {
+    //var size = getVaruint32();
+    var data = getUint8List(numeric.privateKeyDataSize);
+    return GXCPrivateKey.fromBuffer(data).toString();
+  }
+
+  /// Append a signature */
+  void pushSignature(String s) {
+    var bs = hexToBytes(s);
+    pushArray(bs);
+  }
+
+  /// Get a signature */
+  String getSignature() {
+    var data = getUint8List(numeric.signatureDataSize);
+    return bytesToHex(data);
   }
 } // DataStream

@@ -14,6 +14,7 @@ import 'package:cryptoutils/cryptoutils.dart';
 import './exception.dart';
 import './key.dart';
 import './key_base.dart';
+import '../core/formatting.dart';
 
 /// EOS Signature
 class GXCSignature extends GXCKey {
@@ -22,13 +23,11 @@ class GXCSignature extends GXCKey {
 
   /// Default constructor from i, r, s
   GXCSignature(this.i, BigInt r, BigInt s) {
-    this.keyType = 'K1';
     this.ecSig = ECSignature(r, s);
   }
 
   /// Construct EOS signature from buffer
-  GXCSignature.fromBuffer(Uint8List buffer, String keyType) {
-    this.keyType = keyType;
+  GXCSignature.fromBuffer(Uint8List buffer) {
 
     if (buffer.lengthInBytes != 65) {
       throw InvalidKey(
@@ -48,18 +47,8 @@ class GXCSignature extends GXCKey {
 
   /// Construct EOS signature from string
   factory GXCSignature.fromString(String signatureStr) {
-    RegExp sigRegex = RegExp(r"^SIG_([A-Za-z0-9]+)_([A-Za-z0-9]+)",
-        caseSensitive: true, multiLine: false);
-    Iterable<Match> match = sigRegex.allMatches(signatureStr);
-
-    if (match.length == 1) {
-      Match m = match.first;
-      String keyType = m.group(1);
-      Uint8List key = GXCKey.decodeKey(m.group(2), keyType);
-      return GXCSignature.fromBuffer(key, keyType);
-    }
-
-    throw InvalidKey("Invalid EOS signature");
+    var signBytes = hexToBytes(signatureStr);
+    return GXCSignature.fromBuffer(signBytes);
   }
 
   /// Verify the signature of the string data
@@ -77,18 +66,6 @@ class GXCSignature extends GXCKey {
 
     return signer.verifySignature(sha256Data, this.ecSig);
   }
-
-  /*
-  String toString() {
-    List<int> b = List();
-    b.add(i);
-    b.addAll(encodeBigInt(this.ecSig.r));
-    b.addAll(encodeBigInt(this.ecSig.s));
-
-    Uint8List buffer = Uint8List.fromList(b);
-    return 'SIG_${keyType}_${EOSKey.encodeKey(buffer, keyType)}';
-  }
-   */
 
   String toString() {
     List<int> b = List();

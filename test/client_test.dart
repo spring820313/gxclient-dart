@@ -10,8 +10,8 @@ void main() {
     });
 
     test('Get Info', () {
-      Account account = Account('1', 10);
-      print(account.toString());
+      //Account account = Account('1', 10);
+      //print(account.toString());
     });
   });
 }

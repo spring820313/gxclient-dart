@@ -97,6 +97,27 @@ int bytesToUintBE(Uint8List bytes, [int size]) {
   return result;
 }
 
+int bytesToUintLE(Uint8List bytes, [int size]) {
+  if (size == null) size = bytes.length;
+  int result = 0;
+  for (int i = 0; i < size; i++) {
+    result += bytes[i] << (8 * (i));
+  }
+  return result;
+}
+
+DateTime checkDateParse(String date) {
+  var result = DateTime.parse(date + 'Z');
+  return result;
+}
+
+/// Convert date in ISO format to `time_point_sec` (seconds since epoch) */
+int dateToTimePointSec(String date) {
+  var v = checkDateParse(date);
+  int t = (v.millisecondsSinceEpoch / 1000).round();
+  return t;
+}
+
 
 
 

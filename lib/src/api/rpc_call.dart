@@ -15,6 +15,7 @@ class RPC {
   static const String CALL_GET_DYNAMIC_GLOBAL_PROPERTIES =
       "get_dynamic_global_properties";
   static const String CALL_BROADCAST_TRANSACTION = "broadcast_transaction";
+  static const String CALL_BROADCAST_TRANSACTION_SYNCHRONOUS = "broadcast_transaction_synchronous";
   static const String CALL_GET_REQUIRED_FEES = "get_required_fees";
   static const String CALL_GET_KEY_REFERENCES = "get_key_references";
   static const String CALL_GET_RELATIVE_ACCOUNT_HISTORY =
@@ -35,4 +36,6 @@ class RPC {
   static const String CALL_GET_MARKET_HISTORY = "get_market_history";
   static const String CALL_GET_ALL_ASSET_HOLDERS = "get_all_asset_holders";
   static const String CALL_GET_TRANSACTION = "get_transaction";
+  static const String CALL_GET_API_BY_NAME = "get_api_by_name";
+  static const String CALL_GET_CHAIN_ID = "get_chain_id";
 }

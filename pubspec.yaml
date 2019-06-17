@@ -10,7 +10,7 @@ dependencies:
   cryptoutils: ">=0.1.8"
   json_annotation: ^2.2.0
   logging: ^0.11.3+2
-
+  encrypt: any
 dev_dependencies:
   test: ^1.0.0
   build_runner: ^1.0.0

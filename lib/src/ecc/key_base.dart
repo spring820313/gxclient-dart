@@ -11,29 +11,24 @@ import './exception.dart';
 
 /// abstract GXC Key
 abstract class GXCKey {
-  static final String SHA256X2 = 'sha256x2';
   static final int VERSION = 0x80;
   static final ECCurve_secp256k1 secp256k1 = ECCurve_secp256k1();
 
-  String keyType;
-
   /// Decode key from string format
-  static Uint8List decodeKey(String keyStr, [String keyType]) {
+  static Uint8List decodeKey(String keyStr, [bool privkey = false]) {
     Uint8List buffer = base58.decode(keyStr);
 
     Uint8List checksum = buffer.sublist(buffer.length - 4, buffer.length);
     Uint8List key = buffer.sublist(0, buffer.length - 4);
 
     Uint8List newChecksum;
-    if (keyType == SHA256X2) {
+    if (privkey == true) {
       newChecksum = sha256x2(key).sublist(0, 4);
     } else {
       Uint8List check = key;
-      if (keyType != null) {
-        check = concat(key, utf8.encode(keyType));
-      }
       newChecksum = RIPEMD160Digest().process(check).sublist(0, 4);
     }
+
     if (decodeBigInt(checksum) != decodeBigInt(newChecksum)) {
       throw InvalidKey("checksum error");
     }
@@ -41,16 +36,13 @@ abstract class GXCKey {
   }
 
   /// Encode key to string format using base58 encoding
-  static String encodeKey(Uint8List key, [String keyType]) {
-    if (keyType == SHA256X2) {
+  static String encodeKey(Uint8List key, [bool privkey = false]) {
+    if (privkey == true) {
       Uint8List checksum = sha256x2(key).sublist(0, 4);
       return base58.encode(concat(key, checksum));
     }
 
     Uint8List keyBuffer = key;
-    if (keyType != null) {
-      keyBuffer = concat(key, utf8.encode(keyType));
-    }
     Uint8List checksum = RIPEMD160Digest().process(keyBuffer).sublist(0, 4);
     return base58.encode(concat(key, checksum));
   }
