@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'dart:convert';
 import 'numeric.dart' as numeric;
-import 'base.dart';
 import '../ecc/ecc.dart';
 import '../core/formatting.dart';
 
@@ -273,7 +272,8 @@ class DataStream {
     return name;
   }
 
-  /// Append a `symbol` */
+  /*
+  /// Append a `symbol`
   void pushSymbol(Symbol symbol) {
     var a = [symbol.precision & 0xff];
     a.addAll(utf8.encode(symbol.name));
@@ -283,7 +283,7 @@ class DataStream {
     pushArray(a.sublist(0, 8));
   }
 
-  /// Get a `symbol` */
+  /// Get a `symbol`
   Symbol getSymbol() {
     var precision = get();
     var a = getUint8List(7);
@@ -297,7 +297,7 @@ class DataStream {
     return Symbol(name: name, precision: precision);
   }
 
-  /// Append an asset */
+  /// Append an asset
   void pushAsset(String s) {
     s = s.trim();
     var pos = 0;
@@ -333,7 +333,7 @@ class DataStream {
     pushSymbol(Symbol(name: name, precision: precision));
   }
 
-  /// Get an asset */
+  /// Get an asset
   String getAsset() {
     var amount = getUint8List(8);
     var sym = getSymbol();
@@ -345,6 +345,7 @@ class DataStream {
     }
     return s + ' ' + sym.name;
   }
+*/
 
   /// Append a `name` */
   void pushName(String s) {
@@ -372,6 +373,7 @@ class DataStream {
         }
       }
     }
+    //var t = bytesToHex(a);
     pushArray(a);
   }
 

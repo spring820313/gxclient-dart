@@ -299,11 +299,15 @@ class SpecialAuth extends Serializable{
 
   @override
   bool serialize(Encoder encoder)  {
-    encoder.encodeUint8(this.type.index);
+    //encoder.encodeUint8(this.type.index);
     switch(this.type) {
       case SpecialAuthorityType.SpecialAuthorityTypeNoSpecial:
+        final noSpecialAuthority = this.auth as NoSpecialAuthority;
+        noSpecialAuthority.serialize(encoder);
         break;
       case SpecialAuthorityType.SpecialAuthorityTypeTopHolders:
+        final topHoldersSpecialAuthority = this.auth as TopHoldersSpecialAuthority;
+        topHoldersSpecialAuthority.serialize(encoder);
         break;
     }
   }

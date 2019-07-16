@@ -1,5 +1,6 @@
 import '../core/serialization.dart';
 import '../core/encoder.dart';
+import 'dart:collection';
 
 class VoteID extends Serializable{
   int typ;
@@ -57,6 +58,18 @@ class Votes extends Serializable{
       ids.ids.add(id);
     }
     return ids;
+  }
+
+  void sort() {
+    ids.sort((a, b) {
+      return a.instance.compareTo(b.instance);
+    });
+
+    final result = new LinkedHashSet<VoteID>(
+        equals: (VoteID e1, VoteID e2) => e1.instance == e2.instance,
+        hashCode: (VoteID e) => e.instance.hashCode);
+    result.addAll(ids);
+    ids = result.toList();
   }
 
   bool serialize(Encoder encoder)  {

@@ -24,6 +24,17 @@ class RequestApiTypeCall extends Callable {
   }
 }
 
+class GetApiIdByNameCall extends Callable {
+  final String name;
+
+  GetApiIdByNameCall(this.name);
+
+  @override
+  Call toCall(int id, bool httpCall) {
+    return Call(ApiType.API_LOGIN, id, name, [], httpCall);
+  }
+}
+
 class GetApiByNameCall extends Callable {
   final String name;
 

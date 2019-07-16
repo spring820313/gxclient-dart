@@ -25,6 +25,8 @@ class SignedTransaction {
     print(s);
 
     Digest d = sha256.convert(ret);
+    var s2 = bytesToHex(d.bytes);
+    print(s2);
     return d.bytes;
   }
 

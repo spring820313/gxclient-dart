@@ -8,6 +8,18 @@ class AssetAmount extends Serializable{
 
   AssetAmount(this.amount, this.assetID);
 
+  static List<AssetAmount> toList(dynamic json) {
+    List<AssetAmount> fields = List();
+    if(json != null) {
+      final ts = json as List<dynamic>;
+      for(final d in ts) {
+        final f = AssetAmount.fromJson(d);
+        fields.add(f);
+      }
+    }
+    return fields;
+  }
+
   factory AssetAmount.fromJson(Map<String, dynamic> json) {
     String assetId = json['asset_id'] as String;
     GrapheneId id = GrapheneId(assetId);

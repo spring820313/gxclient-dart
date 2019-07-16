@@ -7,22 +7,18 @@ class RPC {
   static const String CALL_DATABASE = "database";
   static const String CALL_ASSET = "asset";
   static const String CALL_SET_SUBSCRIBE_CALLBACK = "set_subscribe_callback";
-  static const String CALL_CANCEL_ALL_SUBSCRIPTIONS =
-      "cancel_all_subscriptions";
+  static const String CALL_CANCEL_ALL_SUBSCRIPTIONS = "cancel_all_subscriptions";
   static const String CALL_GET_ACCOUNT_BY_NAME = "get_account_by_name";
   static const String CALL_GET_ACCOUNTS = "get_accounts";
   static const String CALL_GET_FULL_ACCOUNTS = "get_full_accounts";
-  static const String CALL_GET_DYNAMIC_GLOBAL_PROPERTIES =
-      "get_dynamic_global_properties";
+  static const String CALL_GET_DYNAMIC_GLOBAL_PROPERTIES = "get_dynamic_global_properties";
   static const String CALL_BROADCAST_TRANSACTION = "broadcast_transaction";
   static const String CALL_BROADCAST_TRANSACTION_SYNCHRONOUS = "broadcast_transaction_synchronous";
   static const String CALL_GET_REQUIRED_FEES = "get_required_fees";
   static const String CALL_GET_KEY_REFERENCES = "get_key_references";
-  static const String CALL_GET_RELATIVE_ACCOUNT_HISTORY =
-      "get_relative_account_history";
+  static const String CALL_GET_RELATIVE_ACCOUNT_HISTORY = "get_relative_account_history";
   static const String CALL_GET_ACCOUNT_HISTORY = "get_account_history";
-  static const String CALL_GET_ACCOUNT_HISTORY_BY_OPERATIONS =
-      "get_account_history_by_operations";
+  static const String CALL_GET_ACCOUNT_HISTORY_BY_OPERATIONS = "get_account_history_by_operations";
   static const String CALL_LOOKUP_ACCOUNTS = "lookup_accounts";
   static const String CALL_LIST_ASSETS = "list_assets";
   static const String CALL_GET_ASSETS = "get_assets";
@@ -38,4 +34,10 @@ class RPC {
   static const String CALL_GET_TRANSACTION = "get_transaction";
   static const String CALL_GET_API_BY_NAME = "get_api_by_name";
   static const String CALL_GET_CHAIN_ID = "get_chain_id";
+  static const String CALL_GET_WITNESS_BY_ACCOUNT = "get_witness_by_account";
+  static const String CALL_GET_COMMITTEE_MEMBER_BY_ACCOUNT = "get_committee_member_by_account";
+  static const String CALL_GET_SERIALIZE_CONTRACT_CALL_ARGS = "serialize_contract_call_args";
+  static const String CALL_GET_TABLE_ROWS = "get_table_rows";
+  static const String CALL_GET_TABLE_ROWS_EX = "get_table_rows_ex";
+  static const String CALL_GET_NAMED_ACCOUNT_BALANCES = "get_named_account_balances";
 }

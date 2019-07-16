@@ -4,3 +4,8 @@ export 'transaction_utils.dart';
 export 'signed_transaction.dart';
 export 'aes.dart';
 export 'ops/ops.dart';
+export 'utils.dart';
+export 'formatting.dart';
+export 'serialization.dart';
+export 'data_stream.dart';
+export 'encoder.dart';

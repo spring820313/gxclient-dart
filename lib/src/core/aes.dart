@@ -66,7 +66,7 @@ class GhAes {
 
     //var b = convert.utf8.decode(checksum, allowMalformed: true);
 
-    var ret = cbcEncrypt(checksum, key, iv).sublist(0, 16);
+    var ret = cbcEncrypt(checksum, key, iv);
     //var d = bytesToHex(ret);
     return ret;
   }
@@ -82,17 +82,15 @@ class GhAes {
     result = pushArray(result, convert.utf8.encode(nonce));
     result = pushArray(result, convert.utf8.encode(hexShared));
 
-    Uint8List out = Uint8List(64);
     SHA512Digest sha512 = SHA512Digest();
-    sha512..process(result)
-      ..doFinal(out, 0);
+    final out = sha512.process(result);
 
     var key = out.sublist(0, 32);
     var iv = out.sublist(32, 48);
     var encryptedData = hexToBytes(encryptedMessage);
     var ret = cbcDecrypt(encryptedData, key, iv);
 
-    var checkcum = ret.substring(0, 4);
+    var checksum = ret.substring(0, 4);
     var msgData = ret.substring(4);
 
     return msgData;

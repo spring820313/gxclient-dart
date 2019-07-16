@@ -1,5 +1,6 @@
 import "dart:convert";
 import "dart:typed_data";
+import 'package:collection/collection.dart';
 import 'package:pointycastle/src/utils.dart';
 
 
@@ -40,6 +41,27 @@ Uint8List concatBytes(Uint8List bytes1, Uint8List bytes2) {
   result.setRange(0, bytes1.length, bytes1);
   result.setRange(bytes1.length, result.length, bytes2);
   return result;
+}
+
+bool equalLists(List list1, List list2) =>
+    new ListEquality(new DefaultEquality()).equals(list1, list2);
+
+int binarySearch<T>(List<T> sortedList, T value, {int compare(T a, T b)}) {
+  compare ??= (value1, value2) => (value1 as Comparable).compareTo(value2);
+  int min = 0;
+  int max = sortedList.length;
+  while (min < max) {
+    int mid = min + ((max - min) >> 1);
+    var element = sortedList[mid];
+    int comp = compare(element, value);
+    if (comp == 0) return mid;
+    if (comp < 0) {
+      min = mid + 1;
+    } else {
+      max = mid;
+    }
+  }
+  return -1;
 }
 
 Uint8List uintToBytesLE(int val, [int size = -1]) {

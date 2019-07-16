@@ -25,6 +25,6 @@ class Time extends Serializable{
 
   @override
   dynamic toJson() {
-    return this.dt.toIso8601String();
+    return this.dt.toIso8601String().substring(0, this.dt.toIso8601String().length - 5);
   }
 }

@@ -40,7 +40,7 @@ class Encoder {
   }
 
   void encodeString(String s) {
-    encodeVarint(s.length);
+    //encodeVarint(s.length);
     dataStream.pushString(s);
   }
 
@@ -50,6 +50,10 @@ class Encoder {
 
   void encodePubKey(String pubkey) {
     dataStream.pushPublicKey(pubkey);
+  }
+
+  void encodeName(String name) {
+    dataStream.pushName(name);
   }
 
   Uint8List asBytes() {

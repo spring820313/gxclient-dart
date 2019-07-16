@@ -99,3 +99,48 @@ class Account extends Serializable{
     return val;
   }
 }
+
+class RegisterAccountInfo extends Serializable {
+  String name;
+  String activeKey;
+  String ownerKey;
+  String memoKey;
+
+  RegisterAccountInfo(this.name, this.activeKey, this.ownerKey, this.memoKey);
+
+  @override
+  bool serialize(Encoder encoder)  {
+    return true;
+  }
+
+  @override
+  dynamic toJson() {
+    final val = <String, dynamic>{
+      'name': this.name,
+      'active_key' : this.activeKey,
+      'owner_key' : this.ownerKey ?? this.activeKey,
+      'memo_key' : this.memoKey ?? this.activeKey,
+    };
+
+    return val;
+  }
+}
+
+class RegisterAccount extends Serializable {
+  RegisterAccountInfo account;
+  RegisterAccount(this.account);
+
+  @override
+  bool serialize(Encoder encoder)  {
+    return true;
+  }
+
+  @override
+  dynamic toJson() {
+    final val = <String, dynamic>{
+      'account': this.account.toJson(),
+    };
+
+    return val;
+  }
+}

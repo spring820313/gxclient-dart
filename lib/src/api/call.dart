@@ -2,8 +2,6 @@ import './api_type.dart';
 import './rpc_call.dart';
 
 class Call {
-  static Map<int, int> apiIds = {};
-
   int id;
   int apiId = ApiType.API_NONE;
   String method = 'call';
