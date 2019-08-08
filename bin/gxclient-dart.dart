@@ -165,7 +165,7 @@ void testTransfer() async {
   final memoKey = to.options.memoKey;
   final memo = Memo(key, memoKey, "1234578912345678901234567890");
 
-  final res = await client.transfer(key, from.id, to.id, amount, fee, memo);
+  final res = await client.transfer(key, from.id, to.id, amount, fee, null);
   print(res.toString());
 
   client.close();
@@ -232,7 +232,7 @@ void testFaucet() async {
   Client client = Client('https://testnet.gxchain.org');
   await client.init();
 
-  final info = await client.register("gxc9870", keyPair.publicKey, "https://testnet.faucet.gxchain.org/account/register");
+  final info = await client.register("gxc9873", keyPair.publicKey, "https://testnet.faucet.gxchain.org/account/register");
   print(info);
 
   client.close();
@@ -297,11 +297,10 @@ void main() {
   //testAes();
   //testTransfer();
   //testKeyPair();
-  //testFaucet();
+  testFaucet();
   //testVote();
   //testProxyTransfer();
-  testCallContract();
+  //testCallContract();
   //testCreateContract();
   //testUpdateContract();
-  print('Hello, World!');
 }

@@ -9,6 +9,7 @@ class BalanceClaimOperation extends Operation {
   GrapheneId balanceToClaim;
   String balanceOwnerKey;
   AssetAmount totalClaimed;
+  List<dynamic> extensions;
 
   BalanceClaimOperation(this.depositToAccount, this.balanceToClaim, this.balanceOwnerKey, this.totalClaimed,
       this.fee);
